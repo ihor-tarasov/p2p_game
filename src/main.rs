@@ -17,7 +17,7 @@ fn main() {
             LoadingState::new(states::GameState::AssetLoading)
                 .continue_to_state(states::GameState::Matchmaking),
         )
-        .add_collection_to_loading_state::<_, assets::ImageAssets>(states::GameState::AssetLoading)
+        .add_collection_to_loading_state::<_, assets::ModelAssets>(states::GameState::AssetLoading)
         .add_plugins(DefaultPlugins.set(WindowPlugin {
             primary_window: Some(Window {
                 // fill the entire browser window

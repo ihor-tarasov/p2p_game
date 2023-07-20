@@ -18,32 +18,32 @@ pub fn reload_bullet(
 pub fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
-    //images: Res<ImageAssets>,
+    //models: Res<assets::ModelAssets>,
     mut player_query: Query<(
         &Transform,
         &components::Player,
         &mut components::BulletReady,
-        &components::MoveDir,
     )>,
     mut rip: ResMut<RollbackIdProvider>,
+    mut meshes: ResMut<Assets<Mesh>>,
+    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
-    for (transform, player, mut bullet_ready, move_dir) in player_query.iter_mut() {
+    for (transform, player, mut bullet_ready) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
         if input::fire(input) && bullet_ready.0 {
-            let player_pos = transform.translation.xy();
-            let pos = player_pos + move_dir.0 * PLAYER_RADIUS + BULLET_RADIUS;
+            let player_pos = transform.translation.xz();
             commands.spawn((
                 components::Bullet,
                 rip.next(),
-                *move_dir,
-                SpriteBundle {
-                    transform: Transform::from_translation(pos.extend(200.))
-                        .with_rotation(Quat::from_rotation_arc_2d(Vec2::X, move_dir.0)),
-                    //texture: images.bullet.clone(),
-                    sprite: Sprite {
-                        custom_size: Some(Vec2::new(0.3, 0.1)),
-                        ..default()
-                    },
+                PbrBundle {
+                    transform: Transform::from_translation(Vec3::new(
+                        player_pos.x,
+                        0.5,
+                        player_pos.y,
+                    ))
+                    .with_rotation(transform.rotation),
+                    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
+                    material: materials.add(Color::rgb(0., 0.4, 0.).into()),
                     ..default()
                 },
             ));
@@ -52,12 +52,16 @@ pub fn fire_bullets(
     }
 }
 
-pub fn move_bullet(
-    mut query: Query<(&mut Transform, &components::MoveDir), With<components::Bullet>>,
-) {
-    for (mut transform, dir) in query.iter_mut() {
-        let delta = (dir.0 * 0.35).extend(0.);
-        transform.translation += delta;
+pub fn move_bullet(mut query: Query<&mut Transform, With<components::Bullet>>) {
+    for mut transform in query.iter_mut() {
+        let movement_factor = Vec3::ONE;
+        let movement_direction = transform.rotation * Vec3::Z;
+        // get the distance the ship will move based on direction, the ship's movement speed and delta time
+        let movement_distance = movement_factor * 1.0;
+        // create the change in translation using the new movement direction and distance
+        let translation_delta = movement_direction * movement_distance;
+        // update the ship translation with our new translation delta
+        transform.translation += translation_delta;
     }
 }
 
@@ -75,8 +79,8 @@ pub fn kill_players(
     for (player, player_transform) in player_query.iter() {
         for bullet_transform in bullet_query.iter() {
             let distance = Vec2::distance(
-                player_transform.translation.xy(),
-                bullet_transform.translation.xy(),
+                player_transform.translation.xz(),
+                bullet_transform.translation.xz(),
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
                 commands.entity(player).despawn_recursive();

@@ -20,7 +20,6 @@ pub fn configure(app: &mut App) {
         .with_input_system(input::input)
         .register_rollback_component::<Transform>()
         .register_rollback_component::<components::BulletReady>()
-        .register_rollback_component::<components::MoveDir>()
         .build(app);
 }
 

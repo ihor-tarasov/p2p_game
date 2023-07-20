@@ -6,8 +6,7 @@ use crate::*;
 pub fn spawn_players(
     mut commands: Commands,
     mut rip: ResMut<RollbackIdProvider>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    models: Res<assets::ModelAssets>,
 ) {
     info!("Spawning players");
 
@@ -15,12 +14,10 @@ pub fn spawn_players(
     commands.spawn((
         components::Player { handle: 0 },
         components::BulletReady(true),
-        components::MoveDir(-Vec2::X),
         rip.next(),
-        PbrBundle {
-            transform: Transform::from_translation(Vec3::new(-2., 0.5, 0.0)),
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-            material: materials.add(Color::rgb(0., 0.47, 1.).into()),
+        SceneBundle {
+            scene: models.tank_green.clone(),
+            transform: Transform::from_translation(Vec3::new(-2., 0.0, 0.0)),
             ..default()
         },
     ));
@@ -29,12 +26,10 @@ pub fn spawn_players(
     commands.spawn((
         components::Player { handle: 1 },
         components::BulletReady(true),
-        components::MoveDir(Vec2::X),
         rip.next(),
-        PbrBundle {
-            transform: Transform::from_translation(Vec3::new(2., 0.5, 0.0)),
-            mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-            material: materials.add(Color::rgb(0., 0.4, 0.).into()),
+        SceneBundle {
+            scene: models.tank_red.clone(),
+            transform: Transform::from_translation(Vec3::new(2., 0.0, 0.0)),
             ..default()
         },
     ));
@@ -42,21 +37,10 @@ pub fn spawn_players(
 
 pub fn move_players(
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
-    mut player_query: Query<(
-        &mut Transform,
-        &mut components::MoveDir,
-        &components::Player,
-    )>,
+    mut player_query: Query<(&mut Transform, &components::Player)>,
 ) {
-    for (mut transform, mut move_direction, player) in player_query.iter_mut() {
+    for (mut transform, player) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
-        let direction = input::direction(input);
-
-        if direction == Vec2::ZERO {
-            continue;
-        }
-
-        move_direction.0 = direction;
 
         transform.rotate_y(0.07 * input::rotation(input));
 
@@ -70,6 +54,6 @@ pub fn move_players(
         transform.translation += translation_delta;
         let limit = Vec2::splat(constants::MAP_SIZE as f32 / 2. - 0.5);
         let new_pos = transform.translation.xz().clamp(-limit, limit);
-        transform.translation = Vec3::new(new_pos.x, 0.5, new_pos.y);
+        transform.translation = Vec3::new(new_pos.x, 0.0, new_pos.y);
     }
 }

@@ -1,4 +1,3 @@
-use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 
 use crate::*;
@@ -29,7 +28,7 @@ pub fn camera_follow(
 
             transform.translation = Vec3::new(pos.x, 5.0, pos.z) + translation_delta;
 
-            transform.look_at(Vec3::new(pos.x, 2.0, pos.z), Vec3::Y);
+            transform.look_at(Vec3::new(pos.x, 2.5, pos.z), Vec3::Y);
         }
     }
 }
