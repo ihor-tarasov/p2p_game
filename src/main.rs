@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{pbr::PointLightShadowMap, prelude::*};
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::*;
 use p2p_game::*;
@@ -26,7 +26,12 @@ fn main() {
             }),
             ..default()
         }))
-        .insert_resource(ClearColor(Color::rgb(0.53, 0.53, 0.53)))
+        .insert_resource(PointLightShadowMap { size: 4096 })
+        .insert_resource(ClearColor(Color::rgb(
+            135. / 255.,
+            220. / 255.,
+            237. / 255.,
+        )))
         .add_systems(
             (setup, networking::start_matchbox_socket)
                 .in_schedule(OnEnter(states::GameState::Matchmaking)),
@@ -56,26 +61,33 @@ fn main() {
 
 fn setup(
     mut commands: Commands,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
+    models: Res<assets::ModelAssets>,
 ) {
-    // plane
-    commands.spawn(PbrBundle {
-        mesh: meshes.add(shape::Plane::from_size(constants::MAP_SIZE as f32).into()),
-        material: materials.add(Color::rgb(0.3, 0.5, 0.3).into()),
+    commands.spawn(SceneBundle {
+        scene: models.arena.clone(),
         ..default()
     });
 
-    // light
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
-            shadows_enabled: true,
+    // lights
+    let lights = [
+        Vec3::new(-20., 8., -20.),
+        Vec3::new(20., 8., -20.),
+        Vec3::new(20., 8., 20.),
+        Vec3::new(-20., 8., 20.),
+    ];
+
+    for light in lights {
+        commands.spawn(PointLightBundle {
+            point_light: PointLight {
+                intensity: 8000.0,
+                shadows_enabled: true,
+                range: 41.0,
+                ..default()
+            },
+            transform: Transform::from_translation(light),
             ..default()
-        },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
-        ..default()
-    });
+        });
+    }
 
     // camera
     commands.spawn(Camera3dBundle {

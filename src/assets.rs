@@ -9,4 +9,6 @@ pub struct ModelAssets {
     pub tank_red: Handle<Scene>,
     #[asset(path = "bullet.glb#Scene0")]
     pub bullet: Handle<Scene>,
+    #[asset(path = "arena.glb#Scene0")]
+    pub arena: Handle<Scene>,
 }
