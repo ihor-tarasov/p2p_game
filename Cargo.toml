@@ -1,0 +1,15 @@
+[package]
+name = "extreme_bevy"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+bevy = "0.10"
+bevy_ggrs = { version = "0.12", features = ["wasm-bindgen"] }
+bevy_matchbox = { version = "0.6", features = ["ggrs"] }
+bevy_asset_loader = "0.15"
+console_error_panic_hook = "0.1"
+
+#[profile.release]
+#lto = true
+#codegen-units = 1
