@@ -58,7 +58,7 @@ pub fn move_players(
 
         move_direction.0 = direction;
 
-        transform.rotate_y(0.1 * input::rotation(input));
+        transform.rotate_y(0.07 * input::rotation(input));
 
         let movement_factor = Vec3::ONE;
         let movement_direction = transform.rotation * Vec3::Z;

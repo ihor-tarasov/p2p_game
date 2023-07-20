@@ -1,3 +1,4 @@
+use bevy::math::Vec3Swizzles;
 use bevy::prelude::*;
 
 use crate::*;
@@ -18,9 +19,17 @@ pub fn camera_follow(
         }
 
         let pos = player_transform.translation;
+        let rotation = player_transform.rotation;
 
         for mut transform in camera_query.iter_mut() {
-            transform.look_at(pos, Vec3::Y);
+            let movement_factor = Vec3::ONE;
+            let movement_direction = rotation * Vec3::Z;
+            let movement_distance = movement_factor * -5.0;
+            let translation_delta = movement_direction * movement_distance;
+
+            transform.translation = Vec3::new(pos.x, 5.0, pos.z) + translation_delta;
+
+            transform.look_at(Vec3::new(pos.x, 2.0, pos.z), Vec3::Y);
         }
     }
 }
