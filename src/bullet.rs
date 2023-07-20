@@ -18,15 +18,13 @@ pub fn reload_bullet(
 pub fn fire_bullets(
     mut commands: Commands,
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
-    //models: Res<assets::ModelAssets>,
+    models: Res<assets::ModelAssets>,
     mut player_query: Query<(
         &Transform,
         &components::Player,
         &mut components::BulletReady,
     )>,
     mut rip: ResMut<RollbackIdProvider>,
-    mut meshes: ResMut<Assets<Mesh>>,
-    mut materials: ResMut<Assets<StandardMaterial>>,
 ) {
     for (transform, player, mut bullet_ready) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
@@ -35,15 +33,14 @@ pub fn fire_bullets(
             commands.spawn((
                 components::Bullet,
                 rip.next(),
-                PbrBundle {
+                SceneBundle {
                     transform: Transform::from_translation(Vec3::new(
                         player_pos.x,
-                        0.5,
+                        0.38,
                         player_pos.y,
                     ))
                     .with_rotation(transform.rotation),
-                    mesh: meshes.add(Mesh::from(shape::Cube { size: 1.0 })),
-                    material: materials.add(Color::rgb(0., 0.4, 0.).into()),
+                    scene: models.bullet.clone(),
                     ..default()
                 },
             ));
@@ -74,17 +71,31 @@ pub fn kill_players(
         (Entity, &Transform),
         (With<components::Player>, Without<components::Bullet>),
     >,
-    bullet_query: Query<&Transform, With<components::Bullet>>,
+    bullet_query: Query<(Entity, &Transform), With<components::Bullet>>,
 ) {
     for (player, player_transform) in player_query.iter() {
-        for bullet_transform in bullet_query.iter() {
+        for (bullet, bullet_transform) in bullet_query.iter() {
             let distance = Vec2::distance(
                 player_transform.translation.xz(),
                 bullet_transform.translation.xz(),
             );
             if distance < PLAYER_RADIUS + BULLET_RADIUS {
                 commands.entity(player).despawn_recursive();
+                commands.entity(bullet).despawn_recursive();
             }
+        }
+    }
+}
+
+pub fn despawn(
+    mut commands: Commands,
+    bullet_query: Query<(Entity, &Transform), With<components::Bullet>>,
+) {
+    for (bullet, bullet_transform) in bullet_query.iter() {
+        let limit = Vec2::splat(constants::MAP_SIZE as f32 / 2.);
+        let bullet_pos_2d = bullet_transform.translation.xz();
+        if bullet_pos_2d.clamp(-limit, limit) != bullet_pos_2d {
+            commands.entity(bullet).despawn_recursive();
         }
     }
 }

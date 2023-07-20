@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_asset_loader::prelude::*;
 use bevy_ggrs::*;
-use extreme_bevy::*;
+use p2p_game::*;
 
 fn main() {
     // When building for WASM, print panics to the browser console
@@ -47,6 +47,7 @@ fn main() {
                 bullet::kill_players
                     .after(bullet::move_bullet)
                     .after(player::move_players),
+                bullet::despawn.after(bullet::kill_players),
             )
                 .in_schedule(GGRSSchedule),
         )

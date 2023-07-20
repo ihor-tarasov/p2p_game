@@ -7,4 +7,6 @@ pub struct ModelAssets {
     pub tank_green: Handle<Scene>,
     #[asset(path = "tank_red.glb#Scene0")]
     pub tank_red: Handle<Scene>,
+    #[asset(path = "bullet.glb#Scene0")]
+    pub bullet: Handle<Scene>,
 }
