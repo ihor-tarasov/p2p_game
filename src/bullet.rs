@@ -3,7 +3,7 @@ use bevy_ggrs::*;
 
 use crate::*;
 
-pub fn reload_bullet(
+pub fn reload(
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
     mut query: Query<(&mut components::BulletReady, &components::Player)>,
 ) {
@@ -15,7 +15,7 @@ pub fn reload_bullet(
     }
 }
 
-pub fn fire_bullets(
+pub fn fire(
     mut commands: Commands,
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
     models: Res<assets::ModelAssets>,
@@ -36,7 +36,7 @@ pub fn fire_bullets(
                 SceneBundle {
                     transform: Transform::from_translation(Vec3::new(
                         player_pos.x,
-                        0.38,
+                        constants::GUN_HEIGHT,
                         player_pos.y,
                     ))
                     .with_rotation(transform.rotation),
@@ -49,23 +49,14 @@ pub fn fire_bullets(
     }
 }
 
-pub fn move_bullet(mut query: Query<&mut Transform, With<components::Bullet>>) {
+pub fn moving(mut query: Query<&mut Transform, With<components::Bullet>>) {
     for mut transform in query.iter_mut() {
-        let movement_factor = Vec3::ONE;
-        let movement_direction = transform.rotation * Vec3::Z;
-        // get the distance the ship will move based on direction, the ship's movement speed and delta time
-        let movement_distance = movement_factor * 1.0;
-        // create the change in translation using the new movement direction and distance
-        let translation_delta = movement_direction * movement_distance;
-        // update the ship translation with our new translation delta
+        let translation_delta = transform.rotation * Vec3::Z;
         transform.translation += translation_delta;
     }
 }
 
-const PLAYER_RADIUS: f32 = 0.5;
-const BULLET_RADIUS: f32 = 0.025;
-
-pub fn kill_players(
+pub fn kill(
     mut commands: Commands,
     player_query: Query<
         (Entity, &Transform),
@@ -79,7 +70,7 @@ pub fn kill_players(
                 player_transform.translation.xz(),
                 bullet_transform.translation.xz(),
             );
-            if distance < PLAYER_RADIUS + BULLET_RADIUS {
+            if distance < constants::PLAYER_RADIUS + constants::BULLET_RADIUS {
                 commands.entity(player).despawn_recursive();
                 commands.entity(bullet).despawn_recursive();
             }

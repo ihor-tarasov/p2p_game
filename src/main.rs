@@ -38,23 +38,19 @@ fn main() {
         )
         .add_systems((
             networking::wait_for_players.run_if(in_state(states::GameState::Matchmaking)),
-            player::spawn_players.in_schedule(OnEnter(states::GameState::InGame)),
-            camera::camera_follow.run_if(in_state(states::GameState::InGame)),
+            player::spawn.in_schedule(OnEnter(states::GameState::InGame)),
+            camera::follow.run_if(in_state(states::GameState::InGame)),
         ))
         .add_systems(
             (
                 player::save_positions,
-                player::move_players.after(player::save_positions),
-                player::players_collision.after(player::move_players),
-                bullet::reload_bullet,
-                bullet::fire_bullets
-                    .after(player::players_collision)
-                    .after(bullet::reload_bullet),
-                bullet::move_bullet.after(bullet::fire_bullets),
-                bullet::kill_players
-                    .after(bullet::move_bullet)
-                    .after(player::players_collision),
-                bullet::despawn.after(bullet::kill_players),
+                player::moving.after(player::save_positions),
+                player::collision.after(player::moving),
+                bullet::reload,
+                bullet::fire.after(player::collision).after(bullet::reload),
+                bullet::moving.after(bullet::fire),
+                bullet::kill.after(bullet::moving).after(player::collision),
+                bullet::despawn.after(bullet::kill),
             )
                 .in_schedule(GGRSSchedule),
         )
@@ -67,7 +63,7 @@ fn setup(mut commands: Commands, models: Res<assets::ModelAssets>) {
         ..default()
     });
 
-    // light
+    // Light
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
@@ -79,7 +75,7 @@ fn setup(mut commands: Commands, models: Res<assets::ModelAssets>) {
         ..default()
     });
 
-    // camera
+    // Camera
     commands.spawn(Camera3dBundle {
         transform: Transform::from_xyz(-2.0, 10.0, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
