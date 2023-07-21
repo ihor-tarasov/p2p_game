@@ -20,11 +20,13 @@ pub fn configure(app: &mut App) {
         .with_input_system(input::input)
         .register_rollback_component::<Transform>()
         .register_rollback_component::<components::BulletReady>()
+        .register_rollback_component::<components::MoveSpeed>()
+        .register_rollback_component::<components::RotationSpeed>()
         .build(app);
 }
 
 pub fn start_matchbox_socket(mut commands: Commands) {
-    let room_url = "ws://127.0.0.1:3536/extreme_bevy?next=2";
+    let room_url = "ws://127.0.0.1:3536/p2p_game?next=2";
     info!("connecting to matchbox server: {:?}", room_url);
     commands.insert_resource(MatchboxSocket::new_ggrs(room_url));
 }

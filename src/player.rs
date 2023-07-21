@@ -14,6 +14,8 @@ pub fn spawn(
     commands.spawn((
         components::Player { handle: 0 },
         components::BulletReady(true),
+        components::MoveSpeed(0.0),
+        components::RotationSpeed(0.0),
         rip.next(),
         SceneBundle {
             scene: models.tank_green.clone(),
@@ -26,6 +28,8 @@ pub fn spawn(
     commands.spawn((
         components::Player { handle: 1 },
         components::BulletReady(true),
+        components::MoveSpeed(0.0),
+        components::RotationSpeed(0.0),
         rip.next(),
         SceneBundle {
             scene: models.tank_red.clone(),
@@ -37,14 +41,43 @@ pub fn spawn(
 
 pub fn moving(
     inputs: Res<PlayerInputs<networking::GgrsConfig>>,
-    mut player_query: Query<(&mut Transform, &components::Player)>,
+    mut player_query: Query<(
+        &mut Transform,
+        &mut components::MoveSpeed,
+        &mut components::RotationSpeed,
+        &components::Player,
+    )>,
 ) {
-    for (mut transform, player) in player_query.iter_mut() {
+    for (mut transform, mut move_speed, mut rotation_speed, player) in player_query.iter_mut() {
         let (input, _) = inputs[player.handle];
-        transform.rotate_y(0.07 * input::rotation(input));
+
+        let rotation_speed_max = 0.07;
+        let rotation_acceleration = 0.005;
+        if rotation_speed.0.abs() < rotation_speed_max {
+            rotation_speed.0 += rotation_acceleration * input::rotation(input);
+        } else {
+            rotation_speed.0 = rotation_speed
+                .0
+                .clamp(-rotation_speed_max, rotation_speed_max);
+        }
+
+        let movement_speed_max = 0.13;
+        let movement_acceleration = 0.01;
+        if move_speed.0.abs() < movement_speed_max {
+            move_speed.0 += movement_acceleration * input::forward(input);
+        } else {
+            move_speed.0 = move_speed.0.clamp(-movement_speed_max, movement_speed_max);
+        }
+
+        rotation_speed.0 *= 0.9;
+        move_speed.0 *= 0.9;
+
+        transform.rotate_y(rotation_speed.0);
+
         let movement_direction = transform.rotation * Vec3::Z;
-        let movement_distance = movement_direction * input::forward(input) * 0.13;
+        let movement_distance = movement_direction * move_speed.0;
         transform.translation += movement_distance;
+
         let limit = Vec2::splat(constants::MAP_SIZE as f32 / 2. - 0.5);
         let new_pos = transform.translation.xz().clamp(-limit, limit);
         transform.translation = Vec3::new(new_pos.x, 0.0, new_pos.y);
@@ -75,8 +108,10 @@ pub fn collision(
                 let distance_squared = direction.length_squared();
                 let double_radius_squared: f32 = (constants::PLAYER_RADIUS * 2.0).powi(2i32);
                 if distance_squared <= double_radius_squared {
-                    let half_penetration = (double_radius_squared - distance_squared).sqrt() / 2.0;
-                    let new_pos = pos_a + direction.normalize() * half_penetration;
+                    const PENETRATION_DEPTH: f32 = 10.0;
+                    let penetration =
+                        (double_radius_squared - distance_squared).sqrt() / PENETRATION_DEPTH;
+                    let new_pos = pos_a + direction.normalize() * penetration;
                     let limit = Vec2::splat(constants::MAP_SIZE as f32 / 2. - 0.5);
                     let new_pos = new_pos.clamp(-limit, limit);
                     transform_a.translation.x = new_pos.x;
