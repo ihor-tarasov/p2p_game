@@ -30,6 +30,7 @@ fn main() {
             color: Color::WHITE,
             brightness: 1.0 / 5.0f32,
         })
+        .insert_resource(resources::PlayersPositionsBackup::default())
         .insert_resource(PointLightShadowMap { size: 4096 })
         .add_systems(
             (setup, networking::start_matchbox_socket)
@@ -42,15 +43,17 @@ fn main() {
         ))
         .add_systems(
             (
-                player::move_players,
+                player::save_positions,
+                player::move_players.after(player::save_positions),
+                player::players_collision.after(player::move_players),
                 bullet::reload_bullet,
                 bullet::fire_bullets
-                    .after(player::move_players)
+                    .after(player::players_collision)
                     .after(bullet::reload_bullet),
                 bullet::move_bullet.after(bullet::fire_bullets),
                 bullet::kill_players
                     .after(bullet::move_bullet)
-                    .after(player::move_players),
+                    .after(player::players_collision),
                 bullet::despawn.after(bullet::kill_players),
             )
                 .in_schedule(GGRSSchedule),
