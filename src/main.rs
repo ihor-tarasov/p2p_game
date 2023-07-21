@@ -26,12 +26,11 @@ fn main() {
             }),
             ..default()
         }))
+        .insert_resource(AmbientLight {
+            color: Color::WHITE,
+            brightness: 1.0 / 5.0f32,
+        })
         .insert_resource(PointLightShadowMap { size: 4096 })
-        .insert_resource(ClearColor(Color::rgb(
-            135. / 255.,
-            220. / 255.,
-            237. / 255.,
-        )))
         .add_systems(
             (setup, networking::start_matchbox_socket)
                 .in_schedule(OnEnter(states::GameState::Matchmaking)),
@@ -59,35 +58,23 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    models: Res<assets::ModelAssets>,
-) {
+fn setup(mut commands: Commands, models: Res<assets::ModelAssets>) {
     commands.spawn(SceneBundle {
         scene: models.arena.clone(),
         ..default()
     });
 
-    // lights
-    let lights = [
-        Vec3::new(-20., 8., -20.),
-        Vec3::new(20., 8., -20.),
-        Vec3::new(20., 8., 20.),
-        Vec3::new(-20., 8., 20.),
-    ];
-
-    for light in lights {
-        commands.spawn(PointLightBundle {
-            point_light: PointLight {
-                intensity: 8000.0,
-                shadows_enabled: true,
-                range: 41.0,
-                ..default()
-            },
-            transform: Transform::from_translation(light),
+    // light
+    commands.spawn(PointLightBundle {
+        point_light: PointLight {
+            intensity: 1500.0,
+            shadows_enabled: true,
+            range: 41.0,
             ..default()
-        });
-    }
+        },
+        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        ..default()
+    });
 
     // camera
     commands.spawn(Camera3dBundle {
